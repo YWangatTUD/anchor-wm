@@ -110,10 +110,12 @@
     .faq dd { margin-left: 0; }
     .ptable { width: 100%; border-collapse: collapse; font-size: .92rem; font-variant-numeric: tabular-nums;
               border-top: 2px solid #363636; border-bottom: 2px solid #363636; margin: .75rem 0 .5rem; }
-    table.ptable th:not([align]), table.ptable td { padding: .6rem .8rem; text-align: center; vertical-align: middle; border: none; }
+    .ptable th, .ptable td { border: none; }
+    table.ptable th:not([align]), table.ptable td { padding: .6rem .8rem; text-align: center; vertical-align: middle; }
     .ptable thead th { border-bottom: 1px solid #363636; font-weight: 600; color: #363636; white-space: nowrap; }
     table.ptable tbody tr + tr th, table.ptable tbody tr + tr td { border-top: 1px solid #ececec; }
-    table.ptable tbody th:not([align]), table.ptable td.name, table.ptable thead th.name { text-align: left; font-weight: 500; color: #4a4a4a; white-space: nowrap; }
+    table.ptable tbody th:not([align]), table.ptable td.name { text-align: left; font-weight: 500; color: #4a4a4a; white-space: nowrap; }
+    table.ptable thead th.name { text-align: left; }
     .ptable .ours { background: #eef6fc; }
     .ptable thead th.ours { color: hsl(204, 86%, 38%); }
     .ptable tr.ours td { font-weight: 500; }
