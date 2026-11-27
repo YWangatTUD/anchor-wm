@@ -1,0 +1,22 @@
+# Anchor-WM: Pretrained Features as Teachers, Not States
+
+> Anchor-WM is a compact latent world model for visual planning (Yanbo Wang, Nan Lin, Wendelin Böhmer, Javier Alonso-Mora; arXiv:2610.23984, 2026). It uses frozen DINOv2 patch features as a training-only distillation teacher instead of as the world-model state, then plans with CEM in a 192-dimensional latent. It plans ~100x faster than DINO-WM and has the best average success rate (84.7%) across TwoRoom, Reacher, PushT and OGBench-Cube.
+
+## Key facts
+- Problem: latent-prediction-only world models (JEPA) can collapse; world models built on frozen pretrained features (DINO-WM) plan in a huge state space (196x384 patch tokens) and are slow.
+- Method: ViT-Tiny encoder -> 192-d latent; transformer dynamics model (AdaLN action conditioning) trained with latent MSE; a two-layer MLP head reconstructs flattened DINOv2 patch features from the latent (loss = L_pred + lambda * L_DINO). DINOv2 and the head are discarded at inference.
+- Why it prevents collapse: a constant latent cannot predict observation-dependent DINO features.
+- Planning success (%), avg over 4 envs: Anchor-WM 84.7, LeWM 79.9, DINO-WM 76.6, PLDM 71.4.
+- Planning time (s), PushT: Anchor-WM 1.09, LeWM 1.12, DINO-WM 150.7 (Cube 1.26 vs 130.8; Reacher 1.44 vs 170.7; TwoRoom 0.90 vs 32.0).
+- Long-horizon (goal 50 steps ahead): Anchor-WM 71.1, DINO-WM 67.8, LeWM 65.2.
+- Zero-shot visual perturbations: DINO-WM 74.5, Anchor-WM 61.9, LeWM 48.5.
+- Ablations: patch-level DINO target >> CLS target; MSE > cosine; final-latent distillation >> REPA-style intermediate alignment.
+- Deployed model ~16.4M parameters.
+
+## Links
+- [Project page](https://ywangattud.github.io/anchor-wm/)
+- [arXiv abstract](https://arxiv.org/abs/2610.23984)
+- [PDF](https://arxiv.org/pdf/2610.23984)
+
+## Citation
+@article{wang2026anchorwm, title={Pretrained Features as Teachers, Not States: Compact Latent World Models for Visual Planning}, author={Wang, Yanbo and Lin, Nan and B{\"o}hmer, Wendelin and Alonso-Mora, Javier}, journal={arXiv preprint arXiv:2610.23984}, year={2026}}

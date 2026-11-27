@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- When the code is public: uncomment the Code button below and add it to llms.txt. -->
+
+  <title>Anchor-WM: Pretrained Features as Teachers, Not States — Compact Latent World Models for Visual Planning</title>
+  <meta name="description" content="Anchor-WM is a compact latent world model for visual planning that uses frozen DINOv2 features as a training-only teacher instead of as the world-model state. It plans in a 192-d latent, roughly 100x faster than DINO-WM, with the best average success across TwoRoom, Reacher, PushT and OGBench-Cube.">
+  <meta name="keywords" content="Anchor-WM, world model, latent world model, visual planning, JEPA, DINOv2, DINO-WM, LeWM, LeWorldModel, PLDM, knowledge distillation, feature distillation, representation collapse, model predictive control, CEM, robot learning, PushT, OGBench Cube">
+  <meta name="author" content="Yanbo Wang, Nan Lin, Wendelin Böhmer, Javier Alonso-Mora">
+  <link rel="canonical" href="https://ywangattud.github.io/anchor-wm/">
+
+  <!-- Google Scholar / Semantic Scholar bibliographic tags (Highwire Press) -->
+  <meta name="citation_title" content="Pretrained Features as Teachers, Not States: Compact Latent World Models for Visual Planning">
+  <meta name="citation_author" content="Wang, Yanbo">
+  <meta name="citation_author" content="Lin, Nan">
+  <meta name="citation_author" content="Böhmer, Wendelin">
+  <meta name="citation_author" content="Alonso-Mora, Javier">
+  <meta name="citation_publication_date" content="2026/10/14">
+  <meta name="citation_arxiv_id" content="2610.23984">
+  <meta name="citation_doi" content="10.48550/arXiv.2610.23984">
+  <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2610.23984">
+  <meta name="citation_abstract_html_url" content="https://arxiv.org/abs/2610.23984">
+
+  <!-- Social previews -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Anchor-WM: Pretrained Features as Teachers, Not States">
+  <meta property="og:description" content="Use DINOv2 as a teacher, not as the state: a 192-d latent world model that plans ~100x faster than DINO-WM with the best average success across four benchmarks.">
+  <meta property="og:url" content="https://ywangattud.github.io/anchor-wm/">
+  <meta property="og:image" content="https://ywangattud.github.io/anchor-wm/materials/anchor/overview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Anchor-WM: Pretrained Features as Teachers, Not States">
+  <meta name="twitter:description" content="Compact latent world models for visual planning, distilled from frozen DINOv2 features. ~100x faster planning than DINO-WM.">
+  <meta name="twitter:image" content="https://ywangattud.github.io/anchor-wm/materials/anchor/overview.png">
+
+  <!-- Structured data for search engines and LLM retrieval -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "Pretrained Features as Teachers, Not States: Compact Latent World Models for Visual Planning",
+    "alternateName": "Anchor-WM",
+    "author": [
+      {"@type": "Person", "name": "Yanbo Wang", "url": "https://ywangattud.github.io/website/", "affiliation": {"@type": "Organization", "name": "Delft University of Technology"}},
+      {"@type": "Person", "name": "Nan Lin"},
+      {"@type": "Person", "name": "Wendelin Böhmer"},
+      {"@type": "Person", "name": "Javier Alonso-Mora"}
+    ],
+    "datePublished": "2026-10-14",
+    "identifier": [
+      {"@type": "PropertyValue", "propertyID": "arXiv", "value": "2610.23984"},
+      {"@type": "PropertyValue", "propertyID": "DOI", "value": "10.48550/arXiv.2610.23984"}
+    ],
+    "abstract": "A key design choice in visual world models is what information the latent state is encouraged to preserve. Models that learn a latent space with only a latent-prediction objective adapt to environment dynamics, but the predictive objective alone admits collapsed solutions and provides no explicit constraint on the visual information retained by the latent. Models built directly on pretrained visual features inherit a strong visual prior, but tie prediction and planning to a frozen state space. We propose Anchor-WM, which instead uses pretrained visual features as a teacher for learning a compact latent state rather than as the world-model state itself. Anchor-WM learns this compact latent with action-conditioned dynamics, while distilling the dense DINO representations through a training-only distillation head. This encourages the compact latent to retain visual information captured by the pretrained representation while discouraging representational collapse. At inference, the DINO encoder and distillation head are discarded, allowing prediction and planning to operate entirely in the learned latent space. Anchor-WM achieves the best average success rate across the four evaluated environments while enabling substantially faster planning than world models operating directly on DINO patch features. These results show that pretrained visual features can effectively guide world-model learning without defining the state space used for prediction and planning.",
+    "keywords": ["latent world model", "visual planning", "JEPA", "DINOv2", "knowledge distillation", "representation collapse", "model predictive control", "DINO-WM", "LeWM"],
+    "url": "https://ywangattud.github.io/anchor-wm/",
+    "sameAs": ["https://arxiv.org/abs/2610.23984"],
+    "image": "https://ywangattud.github.io/anchor-wm/materials/anchor/overview.png",
+    "citation": [
+      {"@type": "ScholarlyArticle", "name": "DINO-WM: World Models on Pre-trained Visual Features enable Zero-shot Planning", "url": "https://arxiv.org/abs/2411.04983"},
+      {"@type": "ScholarlyArticle", "name": "LeWorldModel: Stable End-to-End Joint-Embedding Predictive Architecture from Pixels", "url": "https://arxiv.org/abs/2603.19312"}
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "What is Anchor-WM?",
+       "acceptedAnswer": {"@type": "Answer", "text": "Anchor-WM is a compact latent world model for visual planning (Wang, Lin, Böhmer, Alonso-Mora, arXiv:2610.23984). It trains a ViT-Tiny encoder and a transformer dynamics model in a 192-dimensional latent space, and uses frozen DINOv2 patch features only as a training-time distillation target. At inference the DINO encoder is discarded and planning runs in the compact latent."}},
+      {"@type": "Question", "name": "How can I make DINO-WM planning faster?",
+       "acceptedAnswer": {"@type": "Answer", "text": "Instead of planning over 196x384 DINOv2 patch tokens, distill those features into a compact latent and plan there. Anchor-WM does this and plans in about 1 second per episode versus 32-171 seconds for DINO-WM (roughly 35-140x faster, ~100x on manipulation tasks), with a higher average success rate (84.7% vs 76.6%)."}},
+      {"@type": "Question", "name": "How do JEPA world models avoid representation collapse without SIGReg or EMA?",
+       "acceptedAnswer": {"@type": "Answer", "text": "Anchor-WM adds a distillation loss that reconstructs frozen DINOv2 patch features from the latent through an MLP head. A collapsed (constant) latent cannot predict observation-dependent DINO features, so the distillation objective rules out collapse while also injecting a pretrained visual prior."}},
+      {"@type": "Question", "name": "Does Anchor-WM need DINOv2 at test time?",
+       "acceptedAnswer": {"@type": "Answer", "text": "No. The DINOv2 teacher (22M parameters) and the distillation head are used only during training. The deployed model is about 16.4M parameters."}}
+    ]
+  }
+  </script>
+
+  <!-- TODO: replace with this site's own Google Analytics ID, or delete (this ID belongs to the old site) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3593LNYVK9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-3593LNYVK9');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="load-mathjax.js" async></script>
+
+  <style>
+    .tldr { background: #f5f7fa; border-left: 4px solid hsl(204, 86%, 53%); padding: 1rem 1.25rem; border-radius: 6px; }
+    .stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    .stat { text-align: center; }
+    .stat .num { font-family: 'Google Sans', sans-serif; font-size: 2.2rem; font-weight: 700; line-height: 1.1; }
+    .stat .lbl { color: #555; font-size: .95rem; }
+    .faq dt { font-weight: 600; margin-top: 1.1rem; }
+    .faq dd { margin-left: 0; }
+    table.results td, table.results th { text-align: center; vertical-align: middle; white-space: nowrap; }
+    table.results tr.ours { background: #eef6fc; }
+    .caption { font-size: .95rem; color: #333; margin-top: .5rem; }
+    figure { margin: 1.5rem 0; }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-menu is-active" style="box-shadow:none">
+      <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+        <a class="navbar-item" href="https://ywangattud.github.io/website/" aria-label="Author homepage">
+          <span class="icon"><i class="fas fa-home"></i></span>
+        </a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">More Research</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="https://energy-based-model.github.io/compositional-inference/">
+              Compositional Scene Understanding (ICML 2025)
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+  <article>
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">Pretrained Features as Teachers, Not States: Compact Latent World Models for Visual Planning</h1>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><a href="https://ywangattud.github.io/website/">Yanbo Wang</a>,</span>
+              <span class="author-block">Nan Lin,</span>
+              <span class="author-block">Wendelin Böhmer,</span>
+              <span class="author-block">Javier Alonso-Mora</span>
+              <!-- TODO: add homepage links for co-authors -->
+            </div>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">Delft University of Technology</span>
+              <!-- TODO: confirm affiliations -->
+            </div>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><strong>arXiv 2026</strong></span>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="https://arxiv.org/pdf/2610.23984" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span><span>Paper</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/2610.23984" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span><span>arXiv</span>
+                  </a>
+                </span>
+                <!-- Code button: set the URL and uncomment once the code is public
+                <span class="link-block">
+                  <a href="https://github.com/YWangatTUD/REPO" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
+                  </a>
+                </span>
+                -->
+
+
+                <span class="link-block">
+                  <a href="#BibTeX" class="button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-quote-right"></i></span><span>BibTeX</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat"><div class="num">~100&times;</div><div class="lbl">faster planning than DINO-WM</div></div>
+              <div class="stat"><div class="num">84.7%</div><div class="lbl">best average success (4 envs)</div></div>
+              <div class="stat"><div class="num">1&times;192</div><div class="lbl">latent vs. 196&times;384 for DINO-WM</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tldr" style="padding-top:0">
+    <div class="container is-max-desktop">
+      <div class="tldr content">
+        <p><strong>TL;DR.</strong>
+          <strong>Anchor-WM</strong> is a latent world model for visual planning that uses frozen
+          <strong>DINOv2</strong> features as a <em>training-time teacher</em> rather than as the world-model
+          <em>state</em>. A distillation head reconstructs DINO patch features from a compact 192-d latent,
+          which prevents representation collapse and injects a pretrained visual prior. At inference the
+          teacher is discarded, so planning runs in the compact latent: about <strong>100&times; faster than
+          DINO-WM</strong>, as fast as LeWM, and with the <strong>best average success rate</strong> across
+          TwoRoom, Reacher, PushT and OGBench-Cube.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="abstract">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Abstract</h2>
+      <div class="content has-text-justified">
+        <p>
+          A key design choice in visual world models is what information the latent state is encouraged to
+          preserve. Models that learn a latent space with only a latent-prediction objective adapt to
+          environment dynamics, but the predictive objective alone admits collapsed solutions and provides no
+          explicit constraint on the visual information retained by the latent. Models built directly on
+          pretrained visual features inherit a strong visual prior, but tie prediction and planning to a frozen
+          state space. We propose Anchor-WM, which instead uses pretrained visual features as a teacher for
+          learning a compact latent state rather than as the world-model state itself. Anchor-WM learns this
+          compact latent with action-conditioned dynamics, while distilling the dense DINO representations
+          through a training-only distillation head. This encourages the compact latent to retain visual
+          information captured by the pretrained representation while discouraging representational collapse.
+          At inference, the DINO encoder and distillation head are discarded, allowing prediction and planning
+          to operate entirely in the learned latent space. Anchor-WM achieves the best average success rate
+          across the four evaluated environments while enabling substantially faster planning than world models
+          operating directly on DINO patch features. These results show that pretrained visual features can
+          effectively guide world-model learning without defining the state space used for prediction and
+          planning.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="method">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Method</h2>
+      <figure>
+        <img src="materials/anchor/overview.png" style="width:100%"
+             alt="Anchor-WM training and inference. Training: a ViT-Tiny encoder produces a compact latent, a transformer predicts the next latent from actions, and a distillation head reconstructs frozen DINOv2 patch features from the latent. Inference: DINOv2 and the distillation head are discarded and CEM planning runs in the compact latent toward the encoded goal.">
+        <figcaption class="caption"><b>Training and inference of Anchor-WM.</b> During training, the observation
+          encoder, transition model and distillation head are optimized jointly while the pretrained DINO encoder
+          stays frozen. The compact latent is trained with a dynamics-prediction objective and a distillation
+          objective that reconstructs DINO features. At inference, the DINO encoder and distillation head are
+          discarded and planning is performed entirely in the learned latent space.</figcaption>
+      </figure>
+      <div class="content has-text-justified">
+        <p><strong>Latent world model.</strong> An encoder $\mathcal{E}_\theta$ (ViT-Tiny) maps an image
+          $o_t$ to a compact latent $z_t \in \mathbb{R}^{192}$. A transformer transition model $\mathcal{T}_\phi$
+          (action-conditioned via AdaLN) predicts the next latent from a context window,
+          $\hat{z}_{t+1} = \mathcal{T}_\phi(z_{t-K+1:t}, a_{t-K+1:t})$, trained with
+          $\mathcal{L}_{\mathrm{pred}} = \|\hat{z}_{t+1} - z_{t+1}\|_2^2$. On its own this objective admits a
+          collapsed solution: a constant latent predicted perfectly.</p>
+        <p><strong>DINO as teacher, not state.</strong> A two-layer MLP distillation head $\mathcal{H}_\psi$
+          reconstructs the full, flattened DINOv2 patch features $z^{\mathrm{DINO}}_t \in \mathbb{R}^{196 \times 384}$
+          from $z_t$: $\mathcal{L}_{\mathrm{DINO}} = \|\mathcal{H}_\psi(z_t) - z^{\mathrm{DINO}}_t\|_2^2$.
+          Because a constant latent cannot predict observation-dependent DINO features, this rules out collapse,
+          while the learnable head lets $z_t$ keep its own dimensionality and structure. The total loss is
+          $\mathcal{L} = \mathcal{L}_{\mathrm{pred}} + \lambda \mathcal{L}_{\mathrm{DINO}}$.</p>
+        <p><strong>Planning.</strong> The Cross-Entropy Method (CEM) searches for the action sequence whose
+          predicted terminal latent is closest to the encoded goal,
+          $\min_{a} \|\hat{z}_{t+H} - \mathcal{E}_\theta(o^{\mathrm{goal}})\|_2^2$, with MPC-style replanning.
+          The deployed model has about 16.4M parameters; DINOv2 (22M) and the distillation head are training-only.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="comparison">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">How Anchor-WM Differs from DINO-WM and LeWM</h2>
+      <div class="table-container">
+        <table class="table is-bordered is-fullwidth results">
+          <thead>
+            <tr><th></th><th>DINO-WM</th><th>LeWM</th><th>Anchor-WM (ours)</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Role of pretrained features</th><td>World-model state</td><td>Not used</td><td>Training-only teacher</td></tr>
+            <tr><th>Planning state</th><td>196 &times; 384 patch tokens</td><td>1 &times; 192</td><td>1 &times; 192</td></tr>
+            <tr><th>Anti-collapse mechanism</th><td>Frozen encoder</td><td>SIGReg regularizer</td><td>DINO feature distillation</td></tr>
+            <tr><th>DINOv2 needed at inference</th><td>Yes</td><td>No</td><td>No</td></tr>
+            <tr><th>Planning time, PushT (s)</th><td>150.7</td><td>1.12</td><td>1.09</td></tr>
+            <tr><th>Average success, 4 envs (%)</th><td>76.6</td><td>79.9</td><td><b>84.7</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="results">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Results</h2>
+
+      <figure>
+        <img src="materials/anchor/data_illustration.png" style="width:100%"
+             alt="The four evaluation environments: TwoRoom navigation, Reacher, PushT and OGBench-Cube manipulation.">
+        <figcaption class="caption"><b>Environments.</b> TwoRoom (navigation), Reacher, PushT and OGBench-Cube
+          (manipulation), using the stable-worldmodel evaluation protocol.</figcaption>
+      </figure>
+
+      <h3 class="title is-4">Planning success</h3>
+      <p class="caption">Success rate (%) with the goal 25 steps ahead along an expert trajectory and a 50-step
+        budget. Anchor-WM has the highest average success (84.7%), ties DINO-WM on TwoRoom and is best on
+        Reacher, while planning in a latent two orders of magnitude smaller than DINO-WM.</p>
+      <div class="table-container">
+        <table class="table is-bordered is-striped is-fullwidth results">
+          <thead><tr><th>Method</th><th>Latent size</th><th>TwoRoom</th><th>Reacher</th><th>PushT</th><th>Cube</th><th>Average</th></tr></thead>
+          <tbody>
+            <tr><td>Predictive only</td><td>1&times;192</td><td>35.2 &plusmn; 2.2</td><td>10.6 &plusmn; 5.3</td><td>3.2 &plusmn; 1.1</td><td>46.5 &plusmn; 2.9</td><td>23.9</td></tr>
+            <tr><td>PLDM</td><td>1&times;192</td><td>93.0 &plusmn; 2.0</td><td>69.5 &plusmn; 5.8</td><td>71.8 &plusmn; 6.1</td><td>51.2 &plusmn; 1.6</td><td>71.4</td></tr>
+            <tr><td>LeWM</td><td>1&times;192</td><td>86.1 &plusmn; 1.8</td><td>78.4 &plusmn; 5.7</td><td><b>90.4 &plusmn; 4.3</b></td><td>64.8 &plusmn; 2.1</td><td>79.9</td></tr>
+            <tr><td>DINO-WM</td><td>196&times;384</td><td><b>99.6 &plusmn; 0.9</b></td><td>67.2 &plusmn; 1.8</td><td>65.2 &plusmn; 6.6</td><td><b>74.4 &plusmn; 2.6</b></td><td>76.6</td></tr>
+            <tr><td>DINO-WM (CLS)</td><td>1&times;384</td><td>59.3 &plusmn; 1.7</td><td>45.2 &plusmn; 3.4</td><td>37.8 &plusmn; 5.6</td><td>50.2 &plusmn; 3.8</td><td>48.1</td></tr>
+            <tr class="ours"><td><b>Anchor-WM (ours)</b></td><td>1&times;192</td><td><b>99.6 &plusmn; 0.9</b></td><td><b>82.4 &plusmn; 4.3</b></td><td>84.8 &plusmn; 5.4</td><td>72.0 &plusmn; 4.2</td><td><b>84.7</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="title is-4">Planning speed</h3>
+      <figure>
+        <img src="materials/anchor/planning_time_errorbars.png" style="width:100%"
+             alt="Planning time per environment, log scale. Anchor-WM 1.09 s, LeWM 1.12 s, DINO-WM 150.7 s on PushT; Cube 1.26 / 1.22 / 130.8 s; Reacher 1.44 / 1.51 / 170.7 s; TwoRoom 0.90 / 1.09 / 32.0 s.">
+        <figcaption class="caption"><b>Planning time (seconds, log scale).</b> Anchor-WM plans in 0.9&ndash;1.4 s,
+          comparable to LeWM, versus 32&ndash;171 s for DINO-WM: 138&times; faster on PushT, 104&times; on
+          OGBench-Cube, 119&times; on Reacher and 36&times; on TwoRoom.</figcaption>
+      </figure>
+
+      <h3 class="title is-4">Long-horizon and zero-shot planning</h3>
+      <div class="content has-text-justified">
+        <ul>
+          <li><b>Long horizon</b> (goal 50 steps ahead, 100-step budget): Anchor-WM has the highest average
+            success, 71.1% vs. 67.8% for DINO-WM and 65.2% for LeWM, and is best on TwoRoom, Reacher and PushT.</li>
+          <li><b>Zero-shot visual perturbations</b> (unseen end-effector or object colors): Anchor-WM averages
+            61.9% vs. 48.5% for LeWM, showing that training-time DINO supervision transfers robustness to the
+            compact latent; DINO-WM, which keeps DINOv2 at test time, remains stronger (74.5%).</li>
+        </ul>
+      </div>
+
+      <h3 class="title is-4">What the latent captures</h3>
+      <figure>
+        <img src="materials/anchor/rollout_visualization.png" style="width:100%"
+             alt="Open-loop latent rollouts of Anchor-WM decoded back to images on PushT and OGBench-Cube, compared with ground truth.">
+        <figcaption class="caption"><b>Decoded open-loop rollouts.</b> Predicted latents decoded to images on PushT
+          and OGBench-Cube stay aligned with ground truth, preserving object positions and orientations. Linear
+          probes on OGBench-Cube reach r = 0.997 for end-effector position; an MLP probe reaches r = 0.998 for
+          block position.</figcaption>
+      </figure>
+
+      <h3 class="title is-4">Ablations</h3>
+      <div class="content has-text-justified">
+        <ul>
+          <li><b>Patch vs. global target:</b> distilling the full DINO patch grid beats distilling the CLS token
+            in every environment (e.g. Reacher 82.4 vs. 54.7, Cube 72.0 vs. 49.6).</li>
+          <li><b>MSE vs. cosine:</b> MSE distillation beats cosine in every environment; keeping feature magnitude helps.</li>
+          <li><b>Distillation vs. REPA-style alignment:</b> reconstructing DINO features from the final latent
+            beats aligning intermediate (layer-8) encoder features with DINO (e.g. TwoRoom 99.6 vs. 50.0).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">FAQ</h2>
+      <dl class="faq content">
+        <dt>What is Anchor-WM?</dt>
+        <dd>A compact latent world model for visual planning, from "Pretrained Features as Teachers, Not States:
+          Compact Latent World Models for Visual Planning" (Wang, Lin, Böhmer, Alonso-Mora, 2026). It learns a
+          192-d latent with action-conditioned dynamics and uses frozen DINOv2 patch features only as a
+          training-time distillation target.</dd>
+
+        <dt>How can DINO-WM planning be made faster?</dt>
+        <dd>Plan in a compact learned latent instead of over 196&times;384 DINOv2 patch tokens, and use DINO
+          features only to supervise that latent. Anchor-WM does this and plans about 100&times; faster than
+          DINO-WM (e.g. 1.09 s vs. 150.7 s on PushT) with a higher average success rate (84.7% vs. 76.6%).</dd>
+
+        <dt>How is Anchor-WM different from LeWM?</dt>
+        <dd>Both plan in a 192-d latent with a JEPA-style predictor. LeWM prevents collapse with the SIGReg
+          Gaussian regularizer; Anchor-WM prevents it by distilling DINOv2 patch features into the latent,
+          which also adds a pretrained visual prior. Anchor-WM is better on average (84.7% vs. 79.9%), in
+          long-horizon planning (71.1% vs. 65.2%) and under unseen visual perturbations (61.9% vs. 48.5%).</dd>
+
+        <dt>How do you prevent representation collapse in a JEPA world model?</dt>
+        <dd>Anchor-WM's answer: require the latent to reconstruct observation-dependent features from a frozen
+          pretrained encoder. A constant latent cannot do that, so collapse is ruled out without EMA targets,
+          stop-gradients or distributional regularizers.</dd>
+
+        <dt>Does Anchor-WM need DINOv2 at inference?</dt>
+        <dd>No. The DINOv2 teacher and distillation head are discarded after training; the deployed model is
+          about 16.4M parameters.</dd>
+
+        <dt>Why not align intermediate features with DINO, like REPA?</dt>
+        <dd>We tried. Reconstructing DINO features from the final latent through a distillation head clearly
+          beats REPA-style alignment of layer-8 features in all four environments.</dd>
+
+        <dt>What are the limitations?</dt>
+        <dd>Anchor-WM can inherit biases of its DINO teacher, and the evaluation covers four simulated offline
+          visual-control environments; real-robot and longer-horizon settings are future work.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>@article{wang2026anchorwm,
+  title   = {Pretrained Features as Teachers, Not States: Compact Latent World Models for Visual Planning},
+  author  = {Wang, Yanbo and Lin, Nan and B{\"o}hmer, Wendelin and Alonso-Mora, Javier},
+  journal = {arXiv preprint arXiv:2610.23984},
+  year    = {2026}
+}</code></pre>
+    </div>
+  </section>
+
+  <section class="section" id="related">
+    <div class="container is-max-desktop content">
+      <h2 class="title is-4">Related Work</h2>
+      <ul>
+        <li><a href="https://arxiv.org/abs/2411.04983">DINO-WM: World Models on Pre-trained Visual Features enable Zero-shot Planning</a></li>
+        <li><a href="https://le-wm.github.io/">LeWorldModel (LeWM): Stable End-to-End Joint-Embedding Predictive Architecture from Pixels</a></li>
+        <li><a href="https://arxiv.org/abs/2410.06940">REPA: Representation Alignment for Generation</a></li>
+      </ul>
+    </div>
+  </section>
+
+  </article>
+  </main>
+
+  <footer class="footer">
+    <div class="container has-text-centered content">
+      <p>Website adapted from the <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> template.</p>
+    </div>
+  </footer>
+
+</body>
+</html>
